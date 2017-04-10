@@ -132,6 +132,53 @@ MODULE_DEVICE_TABLE(usb, id_table);
 #define UART_OVERRUN_ERROR		0x40
 #define UART_CTS			0x80
 
+/* T11 Eudyptula */
+
+/*
+ * Show (Read) function for id attribute (file)
+ */
+static ssize_t id_show(struct device *dev, struct device_attribute *attr,
+		       char *buf)
+{
+	char *id = "9ad18cb8934a\n";
+
+	return sprintf(buf, "%s", id);
+}
+
+/*
+ * Store (Write) function for id attribute (file)
+ */
+static ssize_t id_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	char *data;
+	char *id = "9ad18cb8934a\n";
+	int id_len = strlen(id);
+	int ret;
+	int cmp = strncmp(id, buf, id_len);
+
+	if (count != id_len) {
+		pr_debug("id_len != count\n");
+		return	-EINVAL;
+	}
+
+
+	if (cmp) {
+		pr_debug("id != buf\n");
+		return -EINVAL;
+	}
+
+
+	ret = sscanf(buf, "%s", data);
+
+	return ret;
+
+}
+
+/* Declare device attribute */
+static DEVICE_ATTR_RW(id);
+
+
 static void pl2303_set_break(struct usb_serial_port *port, bool enable);
 
 enum pl2303_type {
@@ -213,11 +260,25 @@ static int pl2303_vendor_write(struct usb_serial *serial, u16 value, u16 index)
 static int pl2303_probe(struct usb_serial *serial,
 					const struct usb_device_id *id)
 {
+	int retval;
+	struct device *dev = &serial->dev->dev;
+
 	usb_set_serial_data(serial, (void *)id->driver_info);
 
-	return 0;
+	/* T11 eudyptula */
+	retval = device_create_file(dev, &dev_attr_id);
+
+	return retval;
 }
 
+static void pl2303_disconnect(struct usb_serial *serial)
+{
+	/* T11 */
+	struct device *dev = &serial->dev->dev;
+
+	device_remove_file(dev, &dev_attr_id);
+
+}
 static int pl2303_startup(struct usb_serial *serial)
 {
 	struct pl2303_serial_private *spriv;
@@ -958,6 +1019,7 @@ static struct usb_serial_driver pl2303_device = {
 	.release =		pl2303_release,
 	.port_probe =		pl2303_port_probe,
 	.port_remove =		pl2303_port_remove,
+	.disconnect =		pl2303_disconnect,
 };
 
 static struct usb_serial_driver * const serial_drivers[] = {
