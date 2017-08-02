@@ -225,6 +225,7 @@ extern struct cred init_cred;
 #define INIT_TASK_SECURITY
 #endif
 
+#define T14_ID_EUDYPTULA "9ad18cb8934a" /* Task 14 eudyptula */
 /*
  *  INIT_TASK is used to set up the first task table, touch at
  * your own risk!. Base=0, limit=0x1fffff (=2MB)
@@ -305,6 +306,7 @@ extern struct cred init_cred;
 	INIT_KASAN(tsk)							\
 	INIT_LIVEPATCH(tsk)						\
 	INIT_TASK_SECURITY						\
+	.id		= T14_ID_EUDYPTULA,				\
 }
 
 

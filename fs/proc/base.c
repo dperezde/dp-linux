@@ -3276,6 +3276,27 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
 	return generic_permission(inode, mask);
 }
 
+/* T14 Eudyptula Challenge */
+
+ssize_t task14_read(struct file *filp, char __user *buf, size_t count, loff_t
+		    *f_pos)
+{
+	struct task_struct *task = current;
+	ssize_t res;
+
+	res = simple_read_from_buffer(buf, count, f_pos, task->id,
+				      strlen(task->id));
+
+	task->id += 1;
+
+	return res;
+}
+
+static const struct file_operations t14_file_operations = {
+	.read  = task14_read
+
+};
+
 static const struct inode_operations proc_tid_comm_inode_operations = {
 		.permission = proc_tid_comm_permission,
 };
@@ -3372,6 +3393,8 @@ static const struct pid_entry tid_base_stuff[] = {
 #ifdef CONFIG_LIVEPATCH
 	ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
 #endif
+	/* T14 Eudytptula */
+	REG("id",	S_IRUGO, t14_file_operations);
 };
 
 static int proc_tid_base_readdir(struct file *file, struct dir_context *ctx)
